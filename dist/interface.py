@@ -37,28 +37,32 @@ def list_dir(path="."):
 
 
 class ui:
-    first_in = input(os.getcwd() + "> ")
-    working_dir = os.getcwd()
-    change_dir = None
+    def interface(self):
+        input_cmd = input(os.getcwd() + "> ")
+        working_dir = os.getcwd()
+        change_dir = None
+        # os.chdir()
 
 
 
 
-    if first_in == "dir":
-        list_dir()
+
+
+        if input_cmd == "dir":
+                list_dir()
 
 
 
-    if first_in == "tutor":
-        print("Welcome To Tutorial of Finder_CLI \n")
-        print("Finder_CLI is a command line based file explorer, thought and made for programmers. \n")
-        print("To be more productive, keyboard is the choice, and a keyboard based full finder is not there; yet. \n")
-        print("Meet Finder_CLI, the best cli finder you can get. \n")
-        print('Welcome, to use Finder_CLI at its utmost efficiency, you must learn some basic commands, and some advanced commands')
-        print('When it shows you the path, it expects you to do something about it... \n')
-        print('For this, you need to learn basic cd, dir, find, cd.., move, move_dir, rem_dir, rem... and much more, but for right now, this is basics.')
-        print("We'll start with normal commands. ")
-        print("you already know what cd, dir does...")
+        if input_cmd == "tutor":
+                print("Welcome To Tutorial of Finder_CLI \n")
+                print("Finder_CLI is a command line based file explorer, thought and made for programmers. \n")
+                print("To be more productive, keyboard is the choice, and a keyboard based full finder is not there; yet. \n")
+                print("Meet Finder_CLI, the best cli finder you can get. \n")
+                print('Welcome, to use Finder_CLI at its utmost efficiency, you must learn some basic commands, and some advanced commands')
+                print('When it shows you the path, it expects you to do something about it... \n')
+                print('For this, you need to learn basic cd, dir, find, cd.., move, move_dir, rem_dir, rem... and much more, but for right now, this is basics.')
+                print("We'll start with normal commands. ")
+                print("you already know what cd, dir does...")
 
 
 
@@ -66,7 +70,8 @@ ui_obj = ui()
 
 
 if __name__ in "__main__":
-    ui_obj.first_in
+    while True:
+        ui_obj.interface()
 
 
 

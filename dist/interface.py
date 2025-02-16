@@ -8,16 +8,17 @@ import os
 
 
 
-class dir_func:
-    def format_size(size):
+
+
+
+def format_size(size):
         for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
             if size < 1024:
                 return f"{size:.2f} {unit}"
             size /= 1024
         return f"{size:.2f} PB"
 
-    @staticmethod
-    def list_dir(path="."):
+def list_dir(path="."):
         tree = Tree(f"{path}")
 
         for item in os.listdir(path):
@@ -32,12 +33,20 @@ class dir_func:
         console.print(tree)
 
 
+
+
+
 class ui:
     first_in = input(os.getcwd() + "> ")
     working_dir = os.getcwd()
+    change_dir = None
+
+
+
 
     if first_in == "dir":
-        dir_func.list_dir()
+        list_dir()
+
 
 
     if first_in == "tutor":
@@ -49,6 +58,7 @@ class ui:
         print('When it shows you the path, it expects you to do something about it... \n')
         print('For this, you need to learn basic cd, dir, find, cd.., move, move_dir, rem_dir, rem... and much more, but for right now, this is basics.')
         print("We'll start with normal commands. ")
+        print("you already know what cd, dir does...")
 
 
 

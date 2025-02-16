@@ -1,15 +1,14 @@
 import keyboard
 import os
 import sys
-
 from pip._internal.utils.misc import format_size
 from rich.tree import Tree
 from rich.console import Console
 import os
 
 
-class dir_func:
 
+class dir_func:
     def format_size(size):
         for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
             if size < 1024:
@@ -34,12 +33,6 @@ class dir_func:
 
 
 class ui:
-    def __init__(self):
-        pass
-
-
-
-
     first_in = input(os.getcwd() + "> ")
     working_dir = os.getcwd()
 
@@ -59,6 +52,11 @@ class ui:
 
 
 
+ui_obj = ui()
+
+
+if __name__ in "__main__":
+    ui_obj.first_in
 
 
 

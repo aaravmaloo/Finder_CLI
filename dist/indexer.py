@@ -1,28 +1,53 @@
 import os
+import time
+import servicemanager
+import win32serviceutil
+import win32service
+import win32event
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 
 HOME_DIR = Path.home()
 EXCLUDED_FOLDERS = {"AppData"}
+INDEX_FILE_PATH = Path(r"C:\Users\Aarav Maloo\finder_cli\index.txt")
+
+
+class DirectoryIndexHandler(FileSystemEventHandler):
+    def __init__(self, file_index):
+        self.file_index = file_index
+
+    def on_any_event(self, event):
+        if event.is_directory:
+            self.update_index(event.src_path)
+
+    def update_index(self, folder_path):
+        new_index = index_folder(Path(folder_path))
+        self.file_index.update(new_index)
+        self.save_index_to_file()
+
+    def save_index_to_file(self):
+        with open(INDEX_FILE_PATH, "w", encoding="utf-8") as f:
+            for folder, files in self.file_index.items():
+                f.write(f"\nFolder: {folder}\n")
+                for file in files:
+                    f.write(f"  - {file}\n")
+
 
 def index_folder(folder_path):
-
     try:
         path = Path(folder_path).resolve()
         file_list = []
         subfolders = []
 
         for f in path.iterdir():
-            try:
-                if f.is_file():
-                    file_list.append(f.name)
-                elif f.is_dir() and f.name not in EXCLUDED_FOLDERS:
-                    subfolders.append(f)
-            except PermissionError:
-               pass
+            if f.is_file():
+                file_list.append(f.name)
+            elif f.is_dir() and f.name not in EXCLUDED_FOLDERS:
+                subfolders.append(f)
 
-
-        # Recursively index subfolders
         file_index = {str(path): file_list}
 
         with ThreadPoolExecutor() as executor:
@@ -31,41 +56,42 @@ def index_folder(folder_path):
                 file_index.update(result)
 
         return file_index
-    except PermissionError:
-        pass
-        return {str(folder_path): []}
     except Exception as e:
         print(f"Error scanning {folder_path}: {e}")
         return {str(folder_path): []}
 
-def index_home_directory():
 
-    subdirs = [f for f in HOME_DIR.iterdir() if f.is_dir() and f.name not in EXCLUDED_FOLDERS]
-    file_index = {}
+class FinderIndexerService(win32serviceutil.ServiceFramework):
+    _svc_name_ = "finder_indexer"
+    _svc_display_name_ = "Finder Indexer Service"
+    _svc_description_ = "Finder_ClIs service to monitor file changes and save for fast searching and dir lookup."
 
-    with ThreadPoolExecutor(max_workers=len(subdirs)) as executor:
-        results = executor.map(index_folder, subdirs)
+    def __init__(self, args):
+        super().__init__(args)
+        self.halt_event = win32event.CreateEvent(None, 0, 0, None)
+        self.observer = None
 
-    for result in results:
-        file_index.update(result)
+    def SvcStop(self):
+        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+        win32event.SetEvent(self.halt_event)
+        self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
-    return file_index
+    def SvcDoRun(self):
+        self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+        file_index = index_folder(HOME_DIR)
+        event_handler = DirectoryIndexHandler(file_index)
+        self.observer = Observer()
+        self.observer.schedule(event_handler, str(HOME_DIR), recursive=True)
+        self.observer.start()
 
-# Run the scanner
-file_index = index_home_directory()
-
-
-index_dir = Path(r"C:\\Users\\Aarav Maloo\\finder_cli")
-index_dir.mkdir(exist_ok=True)
-
-# Save results
-index_file = index_dir / "index.txt"
-with open(index_file, "w", encoding="utf-8") as f:
-    for folder, files in file_index.items():
-        f.write(f"\nFolder: {folder}\n")
-        for file in files:
-            f.write(f"  - {file}\n")
-
-print(f"Indexing complete! Results saved to {index_file}")
+        servicemanager.LogInfoMsg("Finder Indexer Service Started")
+        while True:
+            if win32event.WaitForSingleObject(self.halt_event, 5000) == win32event.WAIT_OBJECT_0:
+                break
 
 
+if __name__ == "__main__":
+    win32serviceutil.HandleCommandLine(FinderIndexerService)

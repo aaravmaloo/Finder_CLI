@@ -9,10 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-
 HOME_DIR = Path.home()
 EXCLUDED_FOLDERS = {"AppData"}
-INDEX_FILE_PATH = Path(r"C:\Users\Aarav Maloo\finder_cli\index.txt")
+INDEX_FILE_PATH = HOME_DIR / "index.txt"  # Store index in the home folder
 
 
 class DirectoryIndexHandler(FileSystemEventHandler):
@@ -34,6 +33,13 @@ class DirectoryIndexHandler(FileSystemEventHandler):
                 f.write(f"\nFolder: {folder}\n")
                 for file in files:
                     f.write(f"  - {file}\n")
+
+
+def create_initial_index_file():
+    # Create the index file if it doesn't exist
+    if not INDEX_FILE_PATH.exists():
+        with open(INDEX_FILE_PATH, "w", encoding="utf-8") as f:
+            f.write("Initial Index File\n")
 
 
 def index_folder(folder_path):
@@ -81,17 +87,29 @@ class FinderIndexerService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+
+        # Create the index file at service start if it doesn't exist
+        create_initial_index_file()
+
+        # Index the home folder at startup and save the index to the file
         file_index = index_folder(HOME_DIR)
         event_handler = DirectoryIndexHandler(file_index)
+
+        # Save the initial index to the file
+        event_handler.save_index_to_file()
+
+        # Set up the file system observer to monitor changes
         self.observer = Observer()
         self.observer.schedule(event_handler, str(HOME_DIR), recursive=True)
         self.observer.start()
 
         servicemanager.LogInfoMsg("Finder Indexer Service Started")
+
         while True:
             if win32event.WaitForSingleObject(self.halt_event, 5000) == win32event.WAIT_OBJECT_0:
                 break
 
 
+win32serviceutil.HandleCommandLine(FinderIndexerService)
 if __name__ == "__main__":
-    win32serviceutil.HandleCommandLine(FinderIndexerService)
+    pass

@@ -1,17 +1,17 @@
 import os
 import concurrent.futures
 
-# Get the home directory
+
 home_dir = os.path.expanduser("~")
 finder_cli_dir = os.path.join(home_dir, "finder_cli")
 index_file = os.path.join(finder_cli_dir, "index.txt")
 
-# Ensure the finder_cli directory exists
+
 os.makedirs(finder_cli_dir, exist_ok=True)
 
 
 def scan_directory(path):
-    """Scans a directory and returns all file paths, skipping AppData."""
+
     file_paths = []
     for root, _, files in os.walk(path):
         # Skip AppData directory
@@ -25,7 +25,6 @@ def scan_directory(path):
 
 
 def threaded_scan():
-    """Uses multi-threading to scan the home folder (excluding AppData)."""
     subdirs = [os.path.join(home_dir, d) for d in os.listdir(home_dir)]
     subdirs = [d for d in subdirs if os.path.isdir(d) and "AppData" not in d]  # Exclude AppData
 
@@ -44,7 +43,6 @@ if __name__ == "__main__":
     print(f"Scanning your home directory: {home_dir} using 5 threads... (Skipping AppData)")
     all_files = threaded_scan()
 
-    # Save results to index.txt
     with open(index_file, "w", encoding="utf-8") as f:
         f.write("\n".join(all_files))
 

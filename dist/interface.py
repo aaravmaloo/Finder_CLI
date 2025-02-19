@@ -63,6 +63,7 @@ class ui:
                 print('For this, you need to learn basic cd, dir, find, cd.., move, move_dir, rem_dir, rem... and much more, but for right now, this is basics.')
                 print("We'll start with normal commands. ")
                 print("you already know what cd, dir does...")
+                print("to use finder_cli to its fullest, use the fuzzy search feature, and the recent files you've been working on.")
 
 
 

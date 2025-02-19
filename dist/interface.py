@@ -1,6 +1,3 @@
-import keyboard
-import os
-import sys
 from pip._internal.utils.misc import format_size
 from rich.tree import Tree
 from rich.console import Console
@@ -42,6 +39,9 @@ class ui:
         working_dir = os.getcwd()
         change_dir = None
         # os.chdir()
+
+        if input_cmd == "cd..":
+            os.chdir("..")
 
 
 

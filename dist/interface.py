@@ -1,10 +1,10 @@
-from pip._internal.utils.misc import format_size
+from xml.dom import NotFoundErr
+
+import keyboard
 from rich.tree import Tree
 from rich.console import Console
 import os
-
-
-
+import sys
 
 
 
@@ -33,22 +33,28 @@ def list_dir(path="."):
 
 
 
+
 class ui:
     def interface(self):
         input_cmd = input(os.getcwd() + "> ")
         working_dir = os.getcwd()
         change_dir = None
-        # os.chdir()
+
 
         if input_cmd == "cd..":
             os.chdir("..")
 
 
+        if input_cmd.startswith("cd ") :
+            path = input_cmd[3:].strip()
+            try:
+                os.chdir(path)
+            except FileNotFoundError:
+                print("Directory not found.")
+            except PermissionError:
+                print("Permission denied.")
 
-
-
-
-        if input_cmd == "dir":
+        if input_cmd == "ls":
                 list_dir()
 
 

@@ -19,10 +19,10 @@ def list_dir(path="."):
         for item in os.listdir(path):
             full_path = os.path.join(path, item)
             if os.path.isdir(full_path):
-                tree.add(f"{item}")  # Folder
+                tree.add(f"{item}")
             else:
                 size = os.path.getsize(full_path)
-                tree.add(f" {item} {format_size(size)})")
+                tree.add(f" {item} ({format_size(size)})")
 
         console = Console()
         console.print(tree)
@@ -44,19 +44,22 @@ class ui:
             return
 
         if input_cmd.startswith("cd ") :
+            if input_cmd[3: ].strip() == "~":
+                os.chdir(os.path.expanduser("~"))
+                return
             path = input_cmd[3:].strip()
             try:
                 os.chdir(path)
             except FileNotFoundError:
-                print("Directory not found.")
+                print(Fore.RED + "Directory not found." + Style.RESET_ALL)
                 return
 
             except PermissionError:
-                print("Permission denied.")
+                print(Fore.RED + "Permission denied." + Style.RESET_ALL)
                 return
 
             except OSError:
-                print("cd string is empty, supply values")
+                print(Fore.RED + "cd string is empty, supply values" + Style.RESET_ALL)
                 return
 
 

@@ -41,7 +41,7 @@ class ui:
 
         if input_cmd == "cd..":
             os.chdir("..")
-
+            return
 
         if input_cmd.startswith("cd ") :
             path = input_cmd[3:].strip()
@@ -49,13 +49,20 @@ class ui:
                 os.chdir(path)
             except FileNotFoundError:
                 print("Directory not found.")
+                return
+
             except PermissionError:
                 print("Permission denied.")
+                return
+
+            except OSError:
+                print("cd string is empty, supply values")
+                return
 
 
         if input_cmd == "ls":
                 list_dir()
-
+                return
 
 
         if input_cmd == "tutor":
@@ -69,6 +76,8 @@ class ui:
                 print("We'll start with normal commands. ")
                 print("you already know what cd, dir does...")
                 print("to use finder_cli to its fullest, use the fuzzy search feature, and the recent files you've been working on.")
+                return
+
         else:
             print(Fore.RED +  "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
 

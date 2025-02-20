@@ -2,6 +2,7 @@ from colorama import Fore, Style
 from rich.tree import Tree
 from rich.console import Console
 import os
+from pathlib import Path
 
 
 
@@ -61,6 +62,16 @@ class ui:
             except OSError:
                 print(Fore.RED + "cd string is empty, supply values" + Style.RESET_ALL)
                 return
+
+        if input_cmd.startswith("touch "):
+            file_name = input_cmd[6:].strip()
+
+            try:
+                Path(file_name).touch()
+                return
+            except Exception as e:
+                print(f"Error: {e}")
+
 
 
         if input_cmd == "ls":

@@ -90,6 +90,7 @@ class ui:
                 print("We'll start with normal commands. ")
                 print("you already know what cd, dir does...")
                 print("to use finder_cli to its fullest, use the fuzzy search feature, and the recent files you've been working on.")
+                print("touch works as it is expected to, creates the file name specified. However, the full power of touch comes into play when you use it with fuzzy search feature. It will allow you to create files in a dir which is not even active and working, and may be really nested. ")
                 return
 
         else:

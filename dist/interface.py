@@ -1,10 +1,8 @@
-from xml.dom import NotFoundErr
-
-import keyboard
+from colorama import Fore, Style
 from rich.tree import Tree
 from rich.console import Console
 import os
-import sys
+
 
 
 
@@ -54,6 +52,7 @@ class ui:
             except PermissionError:
                 print("Permission denied.")
 
+
         if input_cmd == "ls":
                 list_dir()
 
@@ -70,7 +69,8 @@ class ui:
                 print("We'll start with normal commands. ")
                 print("you already know what cd, dir does...")
                 print("to use finder_cli to its fullest, use the fuzzy search feature, and the recent files you've been working on.")
-
+        else:
+            print(Fore.RED +  "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
 
 
 ui_obj = ui()

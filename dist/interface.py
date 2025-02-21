@@ -5,12 +5,17 @@ import os
 from pathlib import Path
 import shutil
 
+
+
 def format_size(size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
             return f"{size:.2f} {unit}"
         size /= 1024
     return f"{size:.2f} PB"
+
+
+
 
 def list_dir(path="."):
     path = os.path.expanduser(path)
@@ -26,6 +31,10 @@ def list_dir(path="."):
 
     console = Console()
     console.print(tree)
+
+
+
+
 
 def move_file(args):
     if len(args) < 2:
@@ -43,6 +52,9 @@ def move_file(args):
     shutil.move(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
+
+
+
 def change_directory(args):
     if not args:
         print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
@@ -58,6 +70,8 @@ def change_directory(args):
     except OSError:
         print(Fore.RED + "Invalid path, please supply a valid directory." + Style.RESET_ALL)
 
+
+
 def create_file(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -69,11 +83,15 @@ def create_file(args):
     except Exception as e:
         print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
 
+
+
 def show_tutorial(_):
     print("Welcome to Finder_CLI tutorial!")
     print("Finder_CLI is a command-line-based file explorer for programmers.")
     print("Basic commands include cd, ls, move, touch, and more.")
     print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
+
+
 
 COMMANDS = {
     "ls": lambda _: list_dir(),
@@ -81,6 +99,7 @@ COMMANDS = {
     "cd": change_directory,
     "touch": create_file,
     "tutor": show_tutorial,
+
 }
 
 def parse_command(command):
@@ -101,6 +120,8 @@ def parse_command(command):
         COMMANDS[cmd](args)
     else:
         print(Fore.RED + "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
+
+
 
 if __name__ == "__main__":
     while True:

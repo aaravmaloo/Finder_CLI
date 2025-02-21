@@ -189,8 +189,9 @@ def parse_command():
     replacements = {
         "~": os.path.expanduser("~"),
         "*": os.path.expanduser("~/Desktop"),
-        "$": os.path.expanduser("~/Downloads"),
-        "&": os.path.expanduser("~/Appdata")
+        "!": os.path.expanduser("~/Downloads"),
+        "&": os.path.expanduser("~/Appdata"),
+        "/": os.path.join(os.path.splitdrive(os.getcwd())[0], os.sep)
     }
 
 

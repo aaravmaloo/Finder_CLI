@@ -34,6 +34,22 @@ def list_dir(path="."):
 
 
 
+def rm(args):
+    if not args:
+        print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
+    filename = args[0].strip()
+    try:
+        os.remove(filename)
+    except FileNotFoundError:
+        print(Fore.RED + f"file specified in stdin is not found.")
+    except PermissionError:
+        print(Fore.RED + "permission denied by operating system.")
+    return
+
+
+
+
+
 
 
 def move_file(args):
@@ -99,6 +115,8 @@ COMMANDS = {
     "cd": change_directory,
     "touch": create_file,
     "tutor": show_tutorial,
+    "rm": rm,
+    # "rmdir": rmdir,
 
 }
 

@@ -4,7 +4,7 @@ from rich.console import Console
 import os
 from pathlib import Path
 import shutil
-
+import shlex
 
 
 def format_size(size):
@@ -39,9 +39,9 @@ def rm(args):
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
     filename = args[0].strip()
     try:
-        os.remove(filename)
+        os.unlink(filename)
     except FileNotFoundError:
-        print(Fore.RED + f"file specified in stdin is not found.")
+        print(Fore.RED + f"file specified in stdin is not found." + Style.RESET_ALL)
     except PermissionError:
         print(Fore.RED + "permission denied by operating system.")
     return
@@ -89,6 +89,9 @@ def change_directory(args):
         return
 
     path = args[0].strip()
+
+
+
     try:
         os.chdir(path)
     except FileNotFoundError:
@@ -132,27 +135,58 @@ COMMANDS = {
 
 }
 
-def parse_command(command):
-    command = command.strip().replace("~", os.path.expanduser("~"))
-    command = command.replace("*", os.path.expanduser("~\\Desktop"))
-    command = command.replace("$", os.path.expanduser("~\\Downloads"))
-    command = command.replace("&", os.path.expanduser("~\\Appdata"))
 
-    if command == "cd..":
+def parse_command():
+
+    raw_command = input(os.getcwd() + "> ").strip()
+
+
+
+    if raw_command == "cd..":
         os.chdir("..")
+
         return
 
-    parts = command.split()
+
+    try:
+        parts = shlex.split(raw_command, posix=False)
+    except ValueError:
+        print(Fore.RED + "Error: Invalid command syntax (check quotes)." + Style.RESET_ALL)
+        return
+
+    if not parts:
+        return
+
     cmd = parts[0]
-    args = parts[1:]
+    args = parts[1:] if len(parts) > 1 else []
+
+
+    replacements = {
+        "~": os.path.expanduser("~"),
+        "*": os.path.expanduser("~/Desktop"),
+        "$": os.path.expanduser("~/Downloads"),
+        "&": os.path.expanduser("~/Appdata")
+    }
+
+
+    processed_args = []
+    for arg in args:
+        new_arg = arg
+        for shortcut, full_path in replacements.items():
+            if shortcut in new_arg:
+                new_arg = new_arg.replace(shortcut, full_path)
+        processed_args.append(new_arg)
+
 
     if cmd in COMMANDS:
-        COMMANDS[cmd](args)
+        COMMANDS[cmd](processed_args)
     else:
         print(Fore.RED + "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
 
-
-
 if __name__ == "__main__":
     while True:
-        parse_command(input(os.getcwd() + "> "))
+        try:
+            parse_command()
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break

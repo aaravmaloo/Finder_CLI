@@ -72,7 +72,21 @@ def rmdir(args):
     return
 
 
+def copy_file(args):
+    if len(args) < 2:
+        print(Fore.RED + "Error: copy command requires source and destination." + Style.RESET_ALL)
+        return
 
+    source, destination = args[0].strip(), args[1].strip()
+    if not os.path.exists(source):
+        print(Fore.RED + f"Error: Source '{source}' does not exist." + Style.RESET_ALL)
+        return
+
+    if os.path.isdir(destination):
+        destination = os.path.join(destination, os.path.basename(source))
+
+    shutil.copy(source, destination)
+    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
 
 def move_file(args):
@@ -143,7 +157,7 @@ COMMANDS = {
     "tutor": show_tutorial,
     "rm": rm,
     "rmdir": rmdir,
-
+    "copy": copy_file,
 }
 
 

@@ -48,6 +48,18 @@ def rm(args):
 
 
 
+def rmdir(args):
+    if not args:
+        print(Fore.RED + "Error: No folder name specified." + Style.RESET_ALL)
+    filename = args[0].strip()
+    try:
+        os.rmdir(filename)
+    except FileNotFoundError:
+        print(Fore.RED + f"folder specified in stdin is not found.")
+    except PermissionError:
+        print(Fore.RED + "permission denied by operating system.")
+    return
+
 
 
 

@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import shutil
 
-
 def format_size(size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
@@ -13,9 +12,8 @@ def format_size(size):
         size /= 1024
     return f"{size:.2f} PB"
 
-
 def list_dir(path="."):
-    path = os.path.expanduser(path)  # Expand ~ to user's home directory
+    path = os.path.expanduser(path)
     tree = Tree(f"{path}")
 
     for item in os.listdir(path):
@@ -29,84 +27,81 @@ def list_dir(path="."):
     console = Console()
     console.print(tree)
 
+def move_file(args):
+    if len(args) < 2:
+        print(Fore.RED + "Error: move command requires source and destination." + Style.RESET_ALL)
+        return
 
-class ui:
-    def interface(self):
-        input_cmd = input(os.getcwd() + "> ").strip()
-        input_cmd = input_cmd.replace("~", os.path.expanduser("~"))
-        input_cmd = input_cmd.replace("*", os.path.expanduser("~\\Desktop"))
-        input_cmd = input_cmd.replace("$", os.path.expanduser("~\\Downloads"))
-        input_cmd = input_cmd.replace("&", os.path.expanduser("~\\Appdata"))
+    source, destination = args[0].strip(), args[1].strip()
+    if not os.path.exists(source):
+        print(Fore.RED + f"Error: Source '{source}' does not exist." + Style.RESET_ALL)
+        return
 
+    if os.path.isdir(destination):
+        destination = os.path.join(destination, os.path.basename(source))
 
-        if input_cmd == "cd..":
-            os.chdir("..")
-            return
+    shutil.move(source, destination)
+    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
-        if input_cmd.startswith("move "):
-            try:
-                args = input_cmd[5:].strip().split(",")
+def change_directory(args):
+    if not args:
+        print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
+        return
 
-                if len(args) < 2:
-                    print(Fore.RED + "Error: move command requires source and destination." + Style.RESET_ALL)
-                    return
+    path = args[0].strip()
+    try:
+        os.chdir(path)
+    except FileNotFoundError:
+        print(Fore.RED + "Directory not found." + Style.RESET_ALL)
+    except PermissionError:
+        print(Fore.RED + "Permission denied." + Style.RESET_ALL)
+    except OSError:
+        print(Fore.RED + "Invalid path, please supply a valid directory." + Style.RESET_ALL)
 
+def create_file(args):
+    if not args:
+        print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
+        return
 
-                source = args[0].strip()
-                destination = args[1].strip()
+    file_name = args[0].strip()
+    try:
+        Path(file_name).touch()
+    except Exception as e:
+        print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
 
+def show_tutorial(_):
+    print("Welcome to Finder_CLI tutorial!")
+    print("Finder_CLI is a command-line-based file explorer for programmers.")
+    print("Basic commands include cd, ls, move, touch, and more.")
+    print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
 
-                if not os.path.exists(source):
-                    print(Fore.RED + f"Error: Source '{source}' does not exist." + Style.RESET_ALL)
-                    return
+COMMANDS = {
+    "ls": lambda _: list_dir(),
+    "move": move_file,
+    "cd": change_directory,
+    "touch": create_file,
+    "tutor": show_tutorial,
+}
 
-                if os.path.isdir(destination):
-                    destination = os.path.join(destination, os.path.basename(source))
+def parse_command(command):
+    command = command.strip().replace("~", os.path.expanduser("~"))
+    command = command.replace("*", os.path.expanduser("~\\Desktop"))
+    command = command.replace("$", os.path.expanduser("~\\Downloads"))
+    command = command.replace("&", os.path.expanduser("~\\Appdata"))
 
-                shutil.move(source, destination)
-                print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
+    if command == "cd..":
+        os.chdir("..")
+        return
 
-            except Exception as e:
-                print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
-            return
+    parts = command.split()
+    cmd = parts[0]
+    args = parts[1:]
 
-        if input_cmd.startswith("cd "):
-            path = input_cmd[3:].strip()
-            try:
-                os.chdir(path)
-            except FileNotFoundError:
-                print(Fore.RED + "Directory not found." + Style.RESET_ALL)
-            except PermissionError:
-                print(Fore.RED + "Permission denied." + Style.RESET_ALL)
-            except OSError:
-                print(Fore.RED + "Invalid path, please supply a valid directory." + Style.RESET_ALL)
-            return
-
-        if input_cmd.startswith("touch "):
-            file_name = input_cmd[6:].strip()
-            try:
-                Path(file_name).touch()
-            except Exception as e:
-                print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
-            return
-
-        if input_cmd == "ls":
-            list_dir()
-            return
-
-        if input_cmd == "tutor":
-            print("Welcome to Finder_CLI tutorial!")
-            print("Finder_CLI is a command-line-based file explorer for programmers.")
-            print("Basic commands include cd, ls, move, touch, and more.")
-            print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
-            return
-
-        else:
-            print(Fore.RED + "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
-
-
-ui_obj = ui()
+    if cmd in COMMANDS:
+        COMMANDS[cmd](args)
+    else:
+        print(Fore.RED + "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
 
 if __name__ == "__main__":
     while True:
-        ui_obj.interface()
+        parse_command(input(os.getcwd() + "> "))

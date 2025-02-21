@@ -42,6 +42,9 @@ def list_dir(path="."):
     console.print(tree)
 
 
+
+
+
 def rm(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -139,7 +142,7 @@ COMMANDS = {
     "touch": create_file,
     "tutor": show_tutorial,
     "rm": rm,
-    # "rmdir": rmdir,
+    "rmdir": rmdir,
 
 }
 

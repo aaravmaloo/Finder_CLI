@@ -21,7 +21,7 @@ def list_dir(path="."):
     path = os.path.expanduser(path)
     tree = Tree(f"{path}")
 
-    for item in os.listdir(path):
+    for item in os.scandir(path):
         full_path = os.path.join(path, item)
         if os.path.isdir(full_path):
             tree.add(f"{item}/")

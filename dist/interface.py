@@ -34,6 +34,10 @@ class ui:
     def interface(self):
         input_cmd = input(os.getcwd() + "> ").strip()
         input_cmd = input_cmd.replace("~", os.path.expanduser("~"))
+        input_cmd = input_cmd.replace("*", os.path.expanduser("~\\Desktop"))
+        input_cmd = input_cmd.replace("$", os.path.expanduser("~\\Downloads"))
+        input_cmd = input_cmd.replace("&", os.path.expanduser("~\\Appdata"))
+
 
         if input_cmd == "cd..":
             os.chdir("..")

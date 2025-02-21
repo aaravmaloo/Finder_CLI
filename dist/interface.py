@@ -45,7 +45,6 @@ class ui:
 
         if input_cmd.startswith("move "):
             try:
-                # Extract arguments and split by comma
                 args = input_cmd[5:].strip().split(",")
 
                 if len(args) < 2:

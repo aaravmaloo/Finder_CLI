@@ -106,14 +106,33 @@ def move_file(args):
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
 
-
-
 def change_directory(args):
     if not args:
         print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
         return
 
-    path = args[0].strip()
+    path = args[0].strip().strip('"').strip("'")  # Remove quotes
+
+    try:
+        full_path = os.path.abspath(os.path.expanduser(path))
+
+        if not os.path.exists(full_path):
+            print(Fore.RED + f"Error: Path '{full_path}' does not exist." + Style.RESET_ALL)
+            return
+        if not os.path.isdir(full_path):
+            print(Fore.RED + f"Error: '{full_path}' is not a directory." + Style.RESET_ALL)
+            return
+
+        os.chdir(full_path)
+
+
+    except FileNotFoundError:
+        print(Fore.RED + f"Directory not found: '{path}'" + Style.RESET_ALL)
+    except PermissionError:
+        print(Fore.RED + f"Permission denied: '{path}'" + Style.RESET_ALL)
+    except OSError as e:
+        print(Fore.RED + f"Invalid path: {e} (tried '{path}')" + Style.RESET_ALL)
+
 
 
 

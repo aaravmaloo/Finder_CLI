@@ -18,20 +18,28 @@ def format_size(size):
 
 
 def list_dir(path="."):
-    path = os.path.expanduser(path)
+
+    path = os.path.abspath(os.path.expanduser(path))
     tree = Tree(f"{path}")
 
-    for item in os.scandir(path):
-        full_path = os.path.join(path, item)
-        if os.path.isdir(full_path):
-            tree.add(f"{item}/")
-        else:
-            size = os.path.getsize(full_path)
-            tree.add(f" {item} ({format_size(size)})")
+
+    try:
+        with os.scandir(path) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    tree.add(f"{entry.name}/")
+                else:
+                    size = entry.stat().st_size
+                    tree.add(f"{entry.name} ({format_size(size)})")
+    except FileNotFoundError:
+        print(Fore.RED + "Directory not found." + Style.RESET_ALL)
+        return
+    except PermissionError:
+        print(Fore.RED + "Permission denied." + Style.RESET_ALL)
+        return
 
     console = Console()
     console.print(tree)
-
 
 
 def rm(args):

@@ -1,12 +1,17 @@
-from colorama import Fore, Style
-from rich.tree import Tree
-from rich.console import Console
+import subprocess
 import os
+from colorama import Fore, Style, init
 from pathlib import Path
 import shutil
-import shlex
 import msvcrt
+import shlex
+from rich.tree import Tree
+from rich.console import Console
 
+
+init() # colorama
+
+# Function to format file sizes in human-readable form
 def format_size(size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
@@ -14,6 +19,7 @@ def format_size(size):
         size /= 1024
     return f"{size:.2f} PB"
 
+# Function to list the contents of a directory
 def list_dir(path="."):
     path = os.path.abspath(os.path.expanduser(path))
     tree = Tree(f"{path}")
@@ -36,6 +42,7 @@ def list_dir(path="."):
     console = Console()
     console.print(tree)
 
+# Function to remove a file
 def rm(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -43,11 +50,11 @@ def rm(args):
     try:
         os.unlink(filename)
     except FileNotFoundError:
-        print(Fore.RED + f"file specified in stdin is not found." + Style.RESET_ALL)
+        print(Fore.RED + f"File specified in stdin is not found." + Style.RESET_ALL)
     except PermissionError:
-        print(Fore.RED + "permission denied by operating system.")
-    return
+        print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
 
+# Function to remove a directory
 def rmdir(args):
     if not args:
         print(Fore.RED + "Error: No folder name specified." + Style.RESET_ALL)
@@ -55,16 +62,14 @@ def rmdir(args):
     try:
         os.rmdir(filename)
     except FileNotFoundError:
-        print(Fore.RED + f"folder specified in stdin is not found.")
+        print(Fore.RED + f"Folder specified in stdin is not found." + Style.RESET_ALL)
     except PermissionError:
-        print(Fore.RED + "permission denied by operating system.")
-    return
+        print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
 
-
-
+# Function to copy a file
 def copy_file(args):
     if len(args) < 2:
-        print(Fore.RED + "Error: copy command requires source and destination." + Style.RESET_ALL)
+        print(Fore.RED + "Error: Copy command requires source and destination." + Style.RESET_ALL)
         return
 
     source, destination = args[0].strip(), args[1].strip()
@@ -78,9 +83,10 @@ def copy_file(args):
     shutil.copy(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
+# Function to move a file
 def move_file(args):
     if len(args) < 2:
-        print(Fore.RED + "Error: move command requires source and destination." + Style.RESET_ALL)
+        print(Fore.RED + "Error: Move command requires source and destination." + Style.RESET_ALL)
         return
 
     source, destination = args[0].strip(), args[1].strip()
@@ -94,6 +100,7 @@ def move_file(args):
     shutil.move(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
+# Function to change directory and run a script in that directory
 def change_directory(args):
     if not args:
         print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
@@ -124,6 +131,7 @@ def change_directory(args):
             return
 
         os.chdir(full_path)
+
     except FileNotFoundError:
         print(Fore.RED + f"Directory not found: '{path}'" + Style.RESET_ALL)
     except PermissionError:
@@ -131,6 +139,7 @@ def change_directory(args):
     except OSError as e:
         print(Fore.RED + f"Invalid path: {e} (tried '{path}')" + Style.RESET_ALL)
 
+# Function to create a new file
 def create_file(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -142,12 +151,14 @@ def create_file(args):
     except Exception as e:
         print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
 
+# Function to display a tutorial message
 def show_tutorial(_):
     print("Welcome to Finder_CLI tutorial!")
     print("Finder_CLI is a command-line-based file explorer for programmers.")
     print("Basic commands include cd, ls, move, touch, and more.")
     print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
 
+# Mapping commands to their respective functions
 COMMANDS = {
     "ls": lambda _: list_dir(),
     "move": move_file,
@@ -159,56 +170,52 @@ COMMANDS = {
     "copy": copy_file,
 }
 
+def open_powershell_with_cd(path):
+    command = f'powershell -NoExit -Command "Set-Location \'{path}\'"'
+    subprocess.run(command, shell=True)
+
+
+# Function to parse user input and execute commands
 def parse_command():
-    while True:
+    try:
+        while True:
+            if msvcrt.kbhit() and msvcrt.getch() == b'\x1b':  # Exit on ESC key
+                break
 
-        if msvcrt.kbhit():
-            if msvcrt.getch() == b'\x1b':
-                return
+            raw_command = input(os.getcwd() + "> ").strip()
 
-        raw_command = input(os.getcwd() + "> ").strip()
+            if raw_command == "cd..":
+                os.chdir("..")
+                continue
 
+            try:
+                parts = shlex.split(raw_command, posix=False)
+            except ValueError:
+                print(Fore.RED + "Error: Invalid command syntax (check quotes)." + Style.RESET_ALL)
+                continue
 
-        if raw_command == "cd..":
-            os.chdir("..")
-            continue
+            if not parts:
+                continue
 
-        try:
-            parts = shlex.split(raw_command, posix=False)
-        except ValueError:
-            print(Fore.RED + "Error: Invalid command syntax (check quotes)." + Style.RESET_ALL)
-            continue
+            cmd = parts[0]
+            args = parts[1:] if len(parts) > 1 else []
 
-        if not parts:
-            continue
+            if cmd in COMMANDS:
+                COMMANDS[cmd](args)
+            else:
+                print(Fore.RED + "Invalid command." + Style.RESET_ALL)
 
-        cmd = parts[0]
-        args = parts[1:] if len(parts) > 1 else []
+    finally:
+        print(os.getcwd())
 
-        # Handle shortcuts in a way that avoids concatenation issues
-        replacements = {
-            "~": os.path.expanduser("~"),
-            "*": os.path.join(os.path.expanduser("~"), "Desktop"),
-            "!": os.path.join(os.path.expanduser("~"), "Downloads"),
-            "&": os.path.join(os.path.expanduser("~"), "AppData"),
-            "/": os.path.join(os.path.splitdrive(os.getcwd())[0], os.sep)
-        }
-
-        processed_args = []
-        for arg in args:
-            new_arg = arg
-            for shortcut, full_path in replacements.items():
-                if shortcut in new_arg:
-                    new_arg = new_arg.replace(shortcut, full_path)
-            processed_args.append(new_arg)
-
-        if cmd in COMMANDS:
-            COMMANDS[cmd](processed_args)
-        else:
-            print(Fore.RED + "finder_cli command syntax or the command is invalid, please try again" + Style.RESET_ALL)
 
 if __name__ == "__main__":
     try:
         parse_command()
     except KeyboardInterrupt:
-        print("\nExiting...")
+        working_dir = os.getcwd()
+        open_powershell_with_cd(working_dir)
+
+
+
+# open_powershell_with_cd(r"C:\Users\Aarav Maloo\Documents")

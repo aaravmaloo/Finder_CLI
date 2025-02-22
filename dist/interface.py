@@ -11,7 +11,7 @@ from rich.console import Console
 
 init() # colorama
 
-# Function to format file sizes in human-readable form
+
 def format_size(size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
@@ -19,7 +19,7 @@ def format_size(size):
         size /= 1024
     return f"{size:.2f} PB"
 
-# Function to list the contents of a directory
+
 def list_dir(path="."):
     path = os.path.abspath(os.path.expanduser(path))
     tree = Tree(f"{path}")
@@ -42,7 +42,7 @@ def list_dir(path="."):
     console = Console()
     console.print(tree)
 
-# Function to remove a file
+
 def rm(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -54,7 +54,7 @@ def rm(args):
     except PermissionError:
         print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
 
-# Function to remove a directory
+
 def rmdir(args):
     if not args:
         print(Fore.RED + "Error: No folder name specified." + Style.RESET_ALL)
@@ -66,7 +66,7 @@ def rmdir(args):
     except PermissionError:
         print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
 
-# Function to copy a file
+
 def copy_file(args):
     if len(args) < 2:
         print(Fore.RED + "Error: Copy command requires source and destination." + Style.RESET_ALL)
@@ -83,7 +83,7 @@ def copy_file(args):
     shutil.copy(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
-# Function to move a file
+
 def move_file(args):
     if len(args) < 2:
         print(Fore.RED + "Error: Move command requires source and destination." + Style.RESET_ALL)
@@ -100,7 +100,7 @@ def move_file(args):
     shutil.move(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
-# Function to change directory and run a script in that directory
+
 def change_directory(args):
     if not args:
         print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
@@ -108,7 +108,7 @@ def change_directory(args):
 
     path = args[0].strip().strip('"').strip("'")
 
-    # Handle special shortcuts directly
+
     home_dir = os.path.expanduser("~")
     if path == "~":
         full_path = home_dir
@@ -119,7 +119,7 @@ def change_directory(args):
     elif path == "&":
         full_path = os.path.join(home_dir, "AppData")
     else:
-        # For other paths, expand user and make absolute
+
         full_path = os.path.abspath(os.path.expanduser(path))
 
     try:
@@ -139,7 +139,7 @@ def change_directory(args):
     except OSError as e:
         print(Fore.RED + f"Invalid path: {e} (tried '{path}')" + Style.RESET_ALL)
 
-# Function to create a new file
+
 def create_file(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -151,14 +151,14 @@ def create_file(args):
     except Exception as e:
         print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
 
-# Function to display a tutorial message
+
 def show_tutorial(_):
     print("Welcome to Finder_CLI tutorial!")
     print("Finder_CLI is a command-line-based file explorer for programmers.")
     print("Basic commands include cd, ls, move, touch, and more.")
     print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
 
-# Mapping commands to their respective functions
+
 COMMANDS = {
     "ls": lambda _: list_dir(),
     "move": move_file,
@@ -175,11 +175,11 @@ def open_powershell_with_cd(path):
     subprocess.run(command, shell=True)
 
 
-# Function to parse user input and execute commands
+
 def parse_command():
     try:
         while True:
-            if msvcrt.kbhit() and msvcrt.getch() == b'\x1b':  # Exit on ESC key
+            if msvcrt.kbhit() and msvcrt.getch() == b'\x1b':
                 break
 
             raw_command = input(os.getcwd() + "> ").strip()
@@ -218,4 +218,3 @@ if __name__ == "__main__":
 
 
 
-# open_powershell_with_cd(r"C:\Users\Aarav Maloo\Documents")

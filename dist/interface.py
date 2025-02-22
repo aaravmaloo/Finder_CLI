@@ -20,6 +20,9 @@ def format_size(size):
     return f"{size:.2f} PB"
 
 
+
+
+
 def list_dir(path="."):
     path = os.path.abspath(os.path.expanduser(path))
     tree = Tree(f"{path}")
@@ -43,6 +46,9 @@ def list_dir(path="."):
     console.print(tree)
 
 
+
+
+
 def rm(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -55,6 +61,10 @@ def rm(args):
         print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
 
 
+
+
+
+
 def rmdir(args):
     if not args:
         print(Fore.RED + "Error: No folder name specified." + Style.RESET_ALL)
@@ -65,6 +75,10 @@ def rmdir(args):
         print(Fore.RED + f"Folder specified in stdin is not found." + Style.RESET_ALL)
     except PermissionError:
         print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
+
+
+
+
 
 
 def copy_file(args):
@@ -84,6 +98,9 @@ def copy_file(args):
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
 
 
+
+
+
 def move_file(args):
     if len(args) < 2:
         print(Fore.RED + "Error: Move command requires source and destination." + Style.RESET_ALL)
@@ -96,9 +113,12 @@ def move_file(args):
 
     if os.path.isdir(destination):
         destination = os.path.join(destination, os.path.basename(source))
-
     shutil.move(source, destination)
     print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
+
+
+
+
 
 
 def change_directory(args):
@@ -107,7 +127,6 @@ def change_directory(args):
         return
 
     path = args[0].strip().strip('"').strip("'")
-
 
     home_dir = os.path.expanduser("~")
     if path == "~":
@@ -140,6 +159,9 @@ def change_directory(args):
         print(Fore.RED + f"Invalid path: {e} (tried '{path}')" + Style.RESET_ALL)
 
 
+
+
+
 def create_file(args):
     if not args:
         print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
@@ -152,11 +174,16 @@ def create_file(args):
         print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
 
 
+
+
+
 def show_tutorial(_):
     print("Welcome to Finder_CLI tutorial!")
     print("Finder_CLI is a command-line-based file explorer for programmers.")
     print("Basic commands include cd, ls, move, touch, and more.")
     print("Use ~ to refer to your home folder (C:\\Users\\YourName).")
+
+
 
 
 COMMANDS = {
@@ -170,9 +197,13 @@ COMMANDS = {
     "copy": copy_file,
 }
 
+
+
 def open_powershell_with_cd(path):
     command = f'powershell -NoExit -Command "Set-Location \'{path}\'"'
     subprocess.run(command, shell=True)
+
+
 
 
 
@@ -207,6 +238,9 @@ def parse_command():
 
     finally:
         print(os.getcwd())
+
+
+
 
 
 if __name__ == "__main__":

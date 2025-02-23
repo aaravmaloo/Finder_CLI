@@ -7,6 +7,8 @@ home_dir = os.path.expanduser("~")
 finder_cli_dir = os.path.join(home_dir, "finder_cli")
 index_file = os.path.join(finder_cli_dir, "index.txt")
 
+
+
 def main(stdscr):
 
     if not os.path.exists(index_file):
@@ -81,16 +83,22 @@ def main(stdscr):
             if filtered:
                 _, full_path = filtered[selected_idx]
                 try:
+
                     if platform.system() == "Windows":
                         os.startfile(full_path)
+
                     elif platform.system() == "Linux":
                         os.system(f"xdg-open '{full_path}'")
                     elif platform.system() == "Darwin":
                         os.system(f"open '{full_path}'")
+
+
                 except Exception as e:
                     stdscr.addstr(height - 2, 0, f"Error: {str(e)}"[:width - 1])
                     stdscr.refresh()
                     stdscr.getch()
+
+
 
 
         if key == 27:
@@ -104,6 +112,8 @@ def main(stdscr):
                     if filtered:
                         selected_idx = min(len(filtered) - 1, selected_idx + 1)
             stdscr.nodelay(False)
+
+
 
 if __name__ == "__main__":
     curses.wrapper(main)

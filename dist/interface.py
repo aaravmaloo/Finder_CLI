@@ -9,7 +9,7 @@ from rich.tree import Tree
 from rich.console import Console
 
 
-init() # colorama
+init(autoreset=True) # colorama
 
 
 def format_size(size):
@@ -51,14 +51,14 @@ def list_dir(path="."):
 
 def rm(args):
     if not args:
-        print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
+        print(Fore.RED + "Error: No filename specified." )
     filename = args[0].strip()
     try:
         os.unlink(filename)
     except FileNotFoundError:
-        print(Fore.RED + f"File specified in stdin is not found." + Style.RESET_ALL)
+        print(Fore.RED + f"File specified in stdin is not found." )
     except PermissionError:
-        print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
+        print(Fore.RED + "Permission denied by operating system." )
 
 
 
@@ -67,14 +67,14 @@ def rm(args):
 
 def rmdir(args):
     if not args:
-        print(Fore.RED + "Error: No folder name specified." + Style.RESET_ALL)
+        print(Fore.RED + "Error: No folder name specified." )
     filename = args[0].strip()
     try:
         os.rmdir(filename)
     except FileNotFoundError:
-        print(Fore.RED + f"Folder specified in stdin is not found." + Style.RESET_ALL)
+        print(Fore.RED + f"Folder specified in stdin is not found." )
     except PermissionError:
-        print(Fore.RED + "Permission denied by operating system." + Style.RESET_ALL)
+        print(Fore.RED + "Permission denied by operating system." )
 
 
 
@@ -83,19 +83,19 @@ def rmdir(args):
 
 def copy_file(args):
     if len(args) < 2:
-        print(Fore.RED + "Error: Copy command requires source and destination." + Style.RESET_ALL)
+        print(Fore.RED + "Error: Copy command requires source and destination.")
         return
 
     source, destination = args[0].strip(), args[1].strip()
     if not os.path.exists(source):
-        print(Fore.RED + f"Error: Source '{source}' does not exist." + Style.RESET_ALL)
+        print(Fore.RED + f"Error: Source '{source}' does not exist." )
         return
 
     if os.path.isdir(destination):
         destination = os.path.join(destination, os.path.basename(source))
 
     shutil.copy(source, destination)
-    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
+    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" )
 
 
 
@@ -103,18 +103,18 @@ def copy_file(args):
 
 def move_file(args):
     if len(args) < 2:
-        print(Fore.RED + "Error: Move command requires source and destination." + Style.RESET_ALL)
+        print(Fore.RED + "Error: Move command requires source and destination." )
         return
 
     source, destination = args[0].strip(), args[1].strip()
     if not os.path.exists(source):
-        print(Fore.RED + f"Error: Source '{source}' does not exist." + Style.RESET_ALL)
+        print(Fore.RED + f"Error: Source '{source}' does not exist." )
         return
 
     if os.path.isdir(destination):
         destination = os.path.join(destination, os.path.basename(source))
     shutil.move(source, destination)
-    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" + Style.RESET_ALL)
+    print(Fore.GREEN + f"Moved '{source}' to '{destination}'" )
 
 
 
@@ -123,7 +123,7 @@ def move_file(args):
 
 def change_directory(args):
     if not args:
-        print(Fore.RED + "Error: No directory specified." + Style.RESET_ALL)
+        print(Fore.RED + "Error: No directory specified." )
         return
 
     path = args[0].strip().strip('"').strip("'")
@@ -143,20 +143,20 @@ def change_directory(args):
 
     try:
         if not os.path.exists(full_path):
-            print(Fore.RED + f"Error: Path '{full_path}' does not exist." + Style.RESET_ALL)
+            print(Fore.RED + f"Error: Path '{full_path}' does not exist." )
             return
         if not os.path.isdir(full_path):
-            print(Fore.RED + f"Error: '{full_path}' is not a directory." + Style.RESET_ALL)
+            print(Fore.RED + f"Error: '{full_path}' is not a directory." )
             return
 
         os.chdir(full_path)
 
     except FileNotFoundError:
-        print(Fore.RED + f"Directory not found: '{path}'" + Style.RESET_ALL)
+        print(Fore.RED + f"Directory not found: '{path}'" )
     except PermissionError:
-        print(Fore.RED + f"Permission denied: '{path}'" + Style.RESET_ALL)
+        print(Fore.RED + f"Permission denied: '{path}'" )
     except OSError as e:
-        print(Fore.RED + f"Invalid path: {e} (tried '{path}')" + Style.RESET_ALL)
+        print(Fore.RED + f"Invalid path: {e} (tried '{path}')" )
 
 
 
@@ -164,14 +164,14 @@ def change_directory(args):
 
 def create_file(args):
     if not args:
-        print(Fore.RED + "Error: No filename specified." + Style.RESET_ALL)
+        print(Fore.RED + "Error: No filename specified." )
         return
 
     file_name = args[0].strip()
     try:
         Path(file_name).touch()
     except Exception as e:
-        print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"Error: {e}" )
 
 
 
@@ -222,7 +222,7 @@ def parse_command():
             try:
                 parts = shlex.split(raw_command, posix=False)
             except ValueError:
-                print(Fore.RED + "Error: Invalid command syntax (check quotes)." + Style.RESET_ALL)
+                print(Fore.RED + "Error: Invalid command syntax (check quotes)." )
                 continue
 
             if not parts:
@@ -234,11 +234,10 @@ def parse_command():
             if cmd in COMMANDS:
                 COMMANDS[cmd](args)
             else:
-                print(Fore.RED + "Invalid command." + Style.RESET_ALL)
+                print(Fore.RED + "Invalid command." )
 
     finally:
-        print(os.getcwd())
-
+        pass
 
 
 

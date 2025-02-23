@@ -2,13 +2,13 @@ import os
 import curses
 import platform
 
-# Define the base directory for Finder CLI
+
 home_dir = os.path.expanduser("~")
 finder_cli_dir = os.path.join(home_dir, "finder_cli")
 index_file = os.path.join(finder_cli_dir, "index.txt")
 
 def main(stdscr):
-    # Load index and extract names
+
     if not os.path.exists(index_file):
         stdscr.addstr(1, 2, "No index found. Run indexer.py first.")
         stdscr.refresh()
@@ -25,8 +25,8 @@ def main(stdscr):
         stdscr.getch()
         return
 
-    # Search interface
-    curses.curs_set(1)  # Show cursor
+
+    curses.curs_set(1)
     query = ""
     selected_idx = 0
 
@@ -35,19 +35,19 @@ def main(stdscr):
         height, width = stdscr.getmaxyx()
         max_display = height - 2
 
-        # Filter items with substring matching (fast!)
+
         if query:
             filtered = [(name, path) for name, path in items if query.lower() in name.lower()]
         else:
             filtered = items
 
-        # Adjust selected_idx
+
         if not filtered:
             selected_idx = 0
         else:
             selected_idx = max(0, min(selected_idx, len(filtered) - 1))
 
-        # Display filtered items
+
         for i, (name, _) in enumerate(filtered[:max_display]):
             display_name = name[:width - 1]
             if i == selected_idx:
@@ -55,29 +55,29 @@ def main(stdscr):
             else:
                 stdscr.addstr(i, 0, display_name)
 
-        # Draw prompt
+
         prompt = f"Find> {query}"
         stdscr.addstr(height - 1, 0, prompt[:width - 1])
         stdscr.move(height - 1, min(len(prompt), width - 1))
         stdscr.refresh()
 
-        # Handle input
+
         key = stdscr.getch()
-        if key == 27:  # ESC to exit
+        if key == 27:
             break
-        elif key in (curses.KEY_BACKSPACE, 127, 8):  # Backspace
+        elif key in (curses.KEY_BACKSPACE, 127, 8):
             if query:
                 query = query[:-1]
                 selected_idx = 0
-        elif 32 <= key <= 126:  # Printable characters
+        elif 32 <= key <= 126:
             query += chr(key)
             selected_idx = 0
-        elif key == curses.KEY_UP:  # Up arrow
+        elif key == curses.KEY_UP:
             selected_idx = max(0, selected_idx - 1)
-        elif key == curses.KEY_DOWN:  # Down arrow
+        elif key == curses.KEY_DOWN:
             if filtered:
                 selected_idx = min(len(filtered) - 1, selected_idx + 1)
-        elif key == 10:  # Enter to open
+        elif key == 10:
             if filtered:
                 _, full_path = filtered[selected_idx]
                 try:
@@ -92,7 +92,7 @@ def main(stdscr):
                     stdscr.refresh()
                     stdscr.getch()
 
-        # Ctrl + Arrow workaround
+
         if key == 27:
             stdscr.nodelay(True)
             next_key = stdscr.getch()
@@ -100,7 +100,7 @@ def main(stdscr):
                 arrow_key = stdscr.getch()
                 if arrow_key == 65:
                     selected_idx = max(0, selected_idx - 1)
-                elif arrow_key == 66:  # Ctrl + Down
+                elif arrow_key == 66:
                     if filtered:
                         selected_idx = min(len(filtered) - 1, selected_idx + 1)
             stdscr.nodelay(False)

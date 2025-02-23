@@ -1,5 +1,6 @@
 import subprocess
 import os
+from functools import lru_cache
 from colorama import Fore, Style, init
 from pathlib import Path
 import shutil
@@ -11,7 +12,7 @@ from rich.console import Console
 
 init(autoreset=True) # colorama
 
-
+@lru_cache(maxsize=128)
 def format_size(size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
@@ -19,6 +20,10 @@ def format_size(size):
         size /= 1024
     return f"{size:.2f} PB"
 
+
+@lru_cache(maxsize=64)
+def resolve_path(path):
+    return os.path.abspath(os.path.expanduser(path))
 
 
 

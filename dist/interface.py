@@ -23,6 +23,8 @@ def format_size(size):
         size /= 1024
     return f"{size:.2f} PB"
 
+
+
 @lru_cache(maxsize=64)
 def resolve_path(path):
     return os.path.abspath(os.path.expanduser(path))
@@ -147,7 +149,7 @@ def show_tutorial(_):
             "Press Ctrl+S to launch the indexer."], COLOR_DEFAULT
 
 def clear_output(_):
-    return [], COLOR_DEFAULT  # Returning an empty list clears the output
+    return [], COLOR_DEFAULT
 
 COMMANDS = {
     "ls": list_dir,
@@ -166,14 +168,14 @@ def open_powershell_with_cd(path):
     subprocess.run(command, shell=True)
 
 def main(stdscr):
-    # Initialize colors
+
     init_colors()
     global COLOR_RED, COLOR_GREEN, COLOR_DEFAULT
     COLOR_RED = curses.color_pair(1)
     COLOR_GREEN = curses.color_pair(2)
     COLOR_DEFAULT = curses.color_pair(3)
 
-    # Inject color variables into command functions' globals
+
     for func in COMMANDS.values():
         func.__globals__.update({
             "COLOR_RED": COLOR_RED,
@@ -181,40 +183,40 @@ def main(stdscr):
             "COLOR_DEFAULT": COLOR_DEFAULT
         })
 
-    curses.curs_set(1)  # Show cursor
-    stdscr.timeout(100)  # Non-blocking input with 100ms timeout
+    curses.curs_set(1)
+    stdscr.timeout(100)
     command = ""
-    output_lines = []  # Store tuples of (text, color)
+    output_lines = []
     command_history = []
-    history_index = -1  # -1 means current (new) command
+    history_index = -1
 
     while True:
         stdscr.clear()  # Clear the entire screen each loop
         height, width = stdscr.getmaxyx()
 
-        # Display output (limited to available screen height minus prompt area)
-        max_output_lines = height - 2  # Reserve 2 lines for prompt and spacing
+
+        max_output_lines = height - 2
         for i, (line, color) in enumerate(output_lines[-max_output_lines:]):
             stdscr.addstr(i, 0, line[:width-1], color)
 
-        # Display prompt and command at the bottom
-        prompt = f"{os.getcwd()}> {command}"
+
+        prompt = f"[finder_cli] {os.getcwd()}> {command}"
         stdscr.addstr(height-1, 0, prompt[:width-1], COLOR_DEFAULT)
         stdscr.move(height-1, min(len(prompt), width-1))
 
         stdscr.refresh()
 
-        # Get key input
+
         key = stdscr.getch()
-        if key == -1:  # No key pressed
+        if key == -1:
             continue
 
-        if key == 19:  # Ctrl+S (ASCII 19)
+        if key == 19:
             stdscr.clear()
             stdscr.addstr(0, 0, "Launching indexer...", COLOR_DEFAULT)
             stdscr.refresh()
-            indexer.main(stdscr)  # Call indexer.main directly with stdscr
-            stdscr.clear()  # Clear after returning from indexer
+            indexer.main(stdscr)
+            stdscr.clear()
             continue
 
         elif key == 27:  # ESC
@@ -223,7 +225,7 @@ def main(stdscr):
         elif key == 10:  # Enter
             if command.strip():
                 command_history.append(command.strip())
-                history_index = -1  # Reset to current command
+                history_index = -1
                 if command.strip() == "cd..":
                     os.chdir("..")
                     output_lines.append((f"Changed to '{os.getcwd()}'", COLOR_GREEN))
@@ -234,7 +236,7 @@ def main(stdscr):
                         args = parts[1:] if len(parts) > 1 else []
                         if cmd in COMMANDS:
                             result, color = COMMANDS[cmd](args)
-                            if result == []:  # Special case for clear
+                            if not result:
                                 output_lines = []
                             elif result:
                                 output_lines.extend((line, color) for line in result)
@@ -250,7 +252,7 @@ def main(stdscr):
             if command:
                 command = command[:-1]
 
-        elif key == curses.KEY_UP:  # Up arrow for history navigation
+        elif key == curses.KEY_UP:
             if command_history and history_index < len(command_history) - 1:
                 history_index += 1
                 command = command_history[len(command_history) - 1 - history_index]
@@ -266,7 +268,7 @@ def main(stdscr):
         elif 32 <= key <= 126:
             command += chr(key)
 
-    # On exit, open PowerShell
+
     working_dir = os.getcwd()
     open_powershell_with_cd(working_dir)
 

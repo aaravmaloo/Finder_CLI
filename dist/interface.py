@@ -102,21 +102,33 @@ def move_file(args):
     except Exception as e:
         return [f"Error: {e}"], COLOR_RED
 
+
 def change_directory(args):
     if not args:
         return ["Error: No directory specified."], COLOR_RED
+
+    # Get the raw input and clean it
     path = args[0].strip().strip('"').strip("'")
     home_dir = os.path.expanduser("~")
-    if path == "~":
-        full_path = home_dir
-    elif path == "*":
-        full_path = os.path.join(home_dir, "Desktop")
-    elif path == "!":
-        full_path = os.path.join(home_dir, "Downloads")
-    elif path == "&":
-        full_path = os.path.join(home_dir, "AppData")
-    else:
-        full_path = os.path.abspath(os.path.expanduser(path))
+
+    # Define shortcut replacements
+    shortcut_replacements = {
+        "~": home_dir,
+        "*": os.path.join(home_dir, "Desktop"),
+        "!": os.path.join(home_dir, "Downloads"),
+        "&": os.path.join(home_dir, "AppData")
+    }
+
+    # Replace shortcuts if they appear at the start of the path
+    full_path = path
+    for shortcut, replacement in shortcut_replacements.items():
+        if full_path.startswith(shortcut):
+            full_path = full_path.replace(shortcut, replacement, 1)  # Replace only first occurrence
+            break  # Stop after the first match to avoid overlapping replacements
+
+    # Resolve the full path
+    full_path = os.path.abspath(os.path.expanduser(full_path))
+
     try:
         if not os.path.exists(full_path):
             return [f"Error: Path '{full_path}' does not exist."], COLOR_RED

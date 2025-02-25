@@ -191,7 +191,7 @@ def main(stdscr):
     history_index = -1
 
     while True:
-        stdscr.clear()  # Clear the entire screen each loop
+        stdscr.clear()
         height, width = stdscr.getmaxyx()
 
 
@@ -219,10 +219,10 @@ def main(stdscr):
             stdscr.clear()
             continue
 
-        elif key == 27:  # ESC
+        elif key == 27:
             break
 
-        elif key == 10:  # Enter
+        elif key == 10:
             if command.strip():
                 command_history.append(command.strip())
                 history_index = -1

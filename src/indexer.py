@@ -13,11 +13,18 @@ index_file = os.path.join(finder_cli_dir, "index.txt")
 
 os.makedirs(finder_cli_dir, exist_ok=True)
 
-SKIP_DIRS = [
-    "$recycle.bin", "system volume information", "windows",
-    "program files", "program files (x86)", "drivers", "appdata",
-    "$sysreset", "recovery", "boot", "perflogs", "msocache"
-]
+# Platform-specific skip directories
+if platform.system() == "Windows":
+    SKIP_DIRS = [
+        "$recycle.bin", "system volume information", "windows",
+        "program files", "program files (x86)", "drivers", "appdata",
+        "$sysreset", "recovery", "boot", "perflogs", "msocache"
+    ]
+else:  # Linux/Unix
+    SKIP_DIRS = [
+        "proc", "sys", "dev", "tmp", "var", "run",
+        "boot", "root", "sbin", "bin", "lib", "lib64"
+    ]
 
 index_queue = queue.Queue()
 
@@ -42,12 +49,14 @@ class IndexHandler(FileSystemEventHandler):
 def index_files(background=False):
     import concurrent.futures
 
-    base_drive = "C:\\"
+    # Use root directory based on platform
+    base_path = "C:\\" if platform.system() == "Windows" else "/"
+
     try:
-        subdirs = [os.path.join(base_drive, d) for d in os.listdir(base_drive)]
+        subdirs = [os.path.join(base_path, d) for d in os.listdir(base_path)]
         subdirs = [d for d in subdirs if os.path.isdir(d) and not any(skip in d.lower() for skip in SKIP_DIRS)]
     except PermissionError:
-        subdirs = [base_drive]
+        subdirs = [base_path]
 
     paths = []
     num_threads = max(1, os.cpu_count() // 2)
@@ -88,7 +97,6 @@ def remove_path_from_index(path_to_remove):
     with open(index_file, "r", encoding="utf-8") as f:
         paths = f.read().splitlines()
 
-    # Remove the deleted path if it exists in the index
     paths = [p for p in paths if p != path_to_remove]
 
     with open(index_file, "w", encoding="utf-8") as f:
@@ -115,6 +123,9 @@ def load_items():
 
 
 def main(stdscr):
+    # Use root path based on platform
+    root_path = "C:\\" if platform.system() == "Windows" else "/"
+
     if not os.path.exists(index_file):
         stdscr.addstr(1, 2, "Creating initial index...")
         stdscr.refresh()
@@ -131,7 +142,7 @@ def main(stdscr):
 
     event_handler = IndexHandler()
     observer = Observer()
-    observer.schedule(event_handler, "C:\\", recursive=True)
+    observer.schedule(event_handler, root_path, recursive=True)
     observer.start()
 
     try:
@@ -143,7 +154,7 @@ def main(stdscr):
             try:
                 msg = index_queue.get_nowait()
                 if isinstance(msg, tuple) and msg[0] == "remove":
-                    items = load_items()  # Reload items after removal
+                    items = load_items()
                     indexing_status = f"Removed: {os.path.basename(msg[1])}"
                 elif msg == "index_complete":
                     items = load_items()

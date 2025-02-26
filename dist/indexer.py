@@ -28,10 +28,10 @@ class IndexHandler(FileSystemEventHandler):
         self.last_event = 0
 
     def on_any_event(self, event):
-        # Skip events for our own index file and temporary files
+
         if event.src_path.endswith('index.txt') or event.src_path.startswith('~$'):
             return
-        # Simple debouncing - only trigger every 2 seconds
+
         current_time = time.time()
         if current_time - self.last_event > 2:
             index_queue.put("reindex")
@@ -107,11 +107,11 @@ def main(stdscr):
         stdscr.refresh()
         time.sleep(1)
 
-    # Start background indexer thread
+
     indexer_thread = threading.Thread(target=background_indexer, daemon=True)
     indexer_thread.start()
 
-    # Set up Watchdog
+
     items = load_items()
     indexing_status = ""
 
@@ -159,7 +159,7 @@ def main(stdscr):
                 else:
                     stdscr.addstr(i, 0, display_name)
 
-            # Status line
+
             if indexing_status:
                 stdscr.addstr(height - 2, 0, indexing_status[:width - 1])
 

@@ -19,7 +19,6 @@ SKIP_DIRS = [
     "$sysreset", "recovery", "boot", "perflogs", "msocache"
 ]
 
-
 index_queue = queue.Queue()
 
 
@@ -28,13 +27,15 @@ class IndexHandler(FileSystemEventHandler):
         self.last_event = 0
 
     def on_any_event(self, event):
-
         if event.src_path.endswith('index.txt') or event.src_path.startswith('~$'):
             return
 
         current_time = time.time()
         if current_time - self.last_event > 2:
-            index_queue.put("reindex")
+            if event.event_type == 'deleted':
+                index_queue.put(("remove", event.src_path))
+            else:
+                index_queue.put("reindex")
             self.last_event = current_time
 
 
@@ -80,10 +81,26 @@ def index_files(background=False):
         index_queue.put("index_complete")
 
 
+def remove_path_from_index(path_to_remove):
+    if not os.path.exists(index_file):
+        return
+
+    with open(index_file, "r", encoding="utf-8") as f:
+        paths = f.read().splitlines()
+
+    # Remove the deleted path if it exists in the index
+    paths = [p for p in paths if p != path_to_remove]
+
+    with open(index_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(paths))
+
+
 def background_indexer():
     while True:
         msg = index_queue.get()
-        if msg == "reindex":
+        if isinstance(msg, tuple) and msg[0] == "remove":
+            remove_path_from_index(msg[1])
+        elif msg == "reindex":
             index_files(background=True)
         elif msg == "stop":
             break
@@ -98,19 +115,16 @@ def load_items():
 
 
 def main(stdscr):
-    # Initial index if not exists
     if not os.path.exists(index_file):
-        stdscr.addstr(1, 2, "")
+        stdscr.addstr(1, 2, "Creating initial index...")
         stdscr.refresh()
         index_files()
-        stdscr.addstr(2, 2, "")
+        stdscr.addstr(2, 2, "Index created!")
         stdscr.refresh()
         time.sleep(1)
 
-
     indexer_thread = threading.Thread(target=background_indexer, daemon=True)
     indexer_thread.start()
-
 
     items = load_items()
     indexing_status = ""
@@ -126,15 +140,17 @@ def main(stdscr):
         selected_idx = 0
 
         while True:
-
             try:
                 msg = index_queue.get_nowait()
-                if msg == "index_complete":
+                if isinstance(msg, tuple) and msg[0] == "remove":
+                    items = load_items()  # Reload items after removal
+                    indexing_status = f"Removed: {os.path.basename(msg[1])}"
+                elif msg == "index_complete":
                     items = load_items()
-                    indexing_status = ""
+                    indexing_status = "Index updated"
                     threading.Timer(2.0, lambda: globals().update(indexing_status="")).start()
                 elif msg == "reindex":
-                    indexing_status = ""
+                    indexing_status = "Indexing..."
             except queue.Empty:
                 pass
 
@@ -159,7 +175,6 @@ def main(stdscr):
                 else:
                     stdscr.addstr(i, 0, display_name)
 
-
             if indexing_status:
                 stdscr.addstr(height - 2, 0, indexing_status[:width - 1])
 
@@ -183,7 +198,7 @@ def main(stdscr):
             elif key == curses.KEY_DOWN:
                 if filtered:
                     selected_idx = min(len(filtered) - 1, selected_idx + 1)
-            elif key == 10:  # Enter
+            elif key == 10:
                 if filtered:
                     _, full_path = filtered[selected_idx]
                     try:

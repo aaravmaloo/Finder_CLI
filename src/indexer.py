@@ -82,7 +82,7 @@ class IndexerApp:
         # Key bindings
         bindings = KeyBindings()
 
-        @bindings.add('c-c')  # Ctrl+C to exit
+        @bindings.add('escape')  # ESC to exit
         def _(event):
             event.app.exit()
 

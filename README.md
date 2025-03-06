@@ -1,5 +1,15 @@
 # Finder_CLI : A Faster Finder / File Explorer
 
+> [!WARNING]
+> *I am on a break for my exams*
+> The readme has not been updated and does not include any feature 
+> This repository is intended, as of right now to be only used as code 
+> and not as an application, before I release version 2.0 and update the 
+> ReadMe. 
+> Thank You
+> *Will be back by 13th of March...*
+
+
 ---
 
 Ever felt like your operating system's file explorer or finder is not fast

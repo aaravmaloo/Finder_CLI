@@ -1,11 +1,15 @@
+# indexer.py
 import os
-import curses
 import platform
-import time
-import threading
-import queue
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+from rich.console import Console
+from prompt_toolkit import Application
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.layout.containers import HSplit, Window
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.key_binding import KeyBindings
+
+CONSOLE = Console()
 
 home_dir = os.path.expanduser("~")
 finder_cli_dir = os.path.join(home_dir, "finder_cli")
@@ -13,106 +17,37 @@ index_file = os.path.join(finder_cli_dir, "index.txt")
 
 os.makedirs(finder_cli_dir, exist_ok=True)
 
-# Platform-specific skip directories
 if platform.system() == "Windows":
     SKIP_DIRS = [
         "$recycle.bin", "system volume information", "windows",
         "program files", "program files (x86)", "drivers", "appdata",
         "$sysreset", "recovery", "boot", "perflogs", "msocache"
     ]
-else:  # Linux/Unix
+elif platform.system() == "Darwin":  # macOS
     SKIP_DIRS = [
-        "proc", "sys", "dev", "tmp", "var", "run",
-        "boot", "root", "sbin", "bin", "lib", "lib64"
+        "system", "library", "private", "cores", "volumes",
+        "dev", "tmp", "var", "bin", "sbin"
     ]
+else:
+    raise OSError("This script only supports Windows and macOS.")
 
-index_queue = queue.Queue()
-
-
-class IndexHandler(FileSystemEventHandler):
-    def __init__(self):
-        self.last_event = 0
-
-    def on_any_event(self, event):
-        if event.src_path.endswith('index.txt') or event.src_path.startswith('~$'):
-            return
-
-        current_time = time.time()
-        if current_time - self.last_event > 2:
-            if event.event_type == 'deleted':
-                index_queue.put(("remove", event.src_path))
-            else:
-                index_queue.put("reindex")
-            self.last_event = current_time
-
-
-def index_files(background=False):
-    import concurrent.futures
-
-    # Use root directory based on platform
+def index_files():
     base_path = "C:\\" if platform.system() == "Windows" else "/"
-
-    try:
-        subdirs = [os.path.join(base_path, d) for d in os.listdir(base_path)]
-        subdirs = [d for d in subdirs if os.path.isdir(d) and not any(skip in d.lower() for skip in SKIP_DIRS)]
-    except PermissionError:
-        subdirs = [base_path]
-
     paths = []
-    num_threads = max(1, os.cpu_count() // 2)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
-        def scan_dir(path):
-            local_paths = []
-            try:
-                for root, dirs, files in os.walk(path):
-                    try:
-                        root_lower = root.lower()
-                        if any(skip in root_lower for skip in SKIP_DIRS):
-                            continue
-                        local_paths.append(f"{root}")
-                        for file in files:
-                            local_paths.append(os.path.join(root, file))
-                    except PermissionError:
-                        pass
-            except PermissionError:
-                pass
-            return local_paths
-
-        results = executor.map(scan_dir, subdirs)
-        for result in results:
-            paths.extend(result)
+    try:
+        for root, dirs, files in os.walk(base_path):
+            root_lower = root.lower()
+            if any(skip in root_lower for skip in SKIP_DIRS):
+                continue
+            paths.append(root)
+            for file in files:
+                paths.append(os.path.join(root, file))
+    except PermissionError:
+        CONSOLE.print("Permission denied in some directories; indexed accessible areas only.", style="yellow")
 
     with open(index_file, "w", encoding="utf-8") as f:
         f.write("\n".join(paths))
-
-    if background:
-        index_queue.put("index_complete")
-
-
-def remove_path_from_index(path_to_remove):
-    if not os.path.exists(index_file):
-        return
-
-    with open(index_file, "r", encoding="utf-8") as f:
-        paths = f.read().splitlines()
-
-    paths = [p for p in paths if p != path_to_remove]
-
-    with open(index_file, "w", encoding="utf-8") as f:
-        f.write("\n".join(paths))
-
-
-def background_indexer():
-    while True:
-        msg = index_queue.get()
-        if isinstance(msg, tuple) and msg[0] == "remove":
-            remove_path_from_index(msg[1])
-        elif msg == "reindex":
-            index_files(background=True)
-        elif msg == "stop":
-            break
-
+    return paths
 
 def load_items():
     if not os.path.exists(index_file):
@@ -121,114 +56,117 @@ def load_items():
         full_paths = f.read().splitlines()
     return [(os.path.basename(path), path) for path in full_paths]
 
+class IndexerApp:
+    def __init__(self):
+        self.items = load_items()
+        self.selected_idx = 0
 
-def main(stdscr):
-    # Use root path based on platform
-    root_path = "C:\\" if platform.system() == "Windows" else "/"
+        # Buffer for user input
+        self.buffer = Buffer(on_text_changed=self.update_results)
 
+        # Display area for results
+        self.results_control = FormattedTextControl(self.get_results_text)
+        self.results_window = Window(content=self.results_control, height=20)
+
+        # Inline prompt and input
+        self.prompt_control = FormattedTextControl(self.get_prompt_text)
+        self.input_window = Window(content=BufferControl(buffer=self.buffer), height=1)
+
+        # Layout
+        self.root_container = HSplit([
+            self.results_window,
+            Window(content=self.prompt_control, height=1),  # Prompt and input on same line
+        ])
+        self.layout = Layout(self.root_container)
+
+        # Key bindings
+        bindings = KeyBindings()
+
+        @bindings.add('escape')  # ESC to exit
+        def _(event):
+            event.app.exit()
+
+        @bindings.add('up')  # Up arrow
+        def _(event):
+            self.selected_idx = max(0, self.selected_idx - 1)
+            self.update_display()
+
+        @bindings.add('down')  # Down arrow
+        def _(event):
+            filtered = self.get_filtered_items()
+            if filtered:
+                self.selected_idx = min(len(filtered) - 1, self.selected_idx + 1)
+            self.update_display()
+
+        @bindings.add('enter')  # Enter to open
+        def _(event):
+            filtered = self.get_filtered_items()
+            if filtered and self.selected_idx < len(filtered):
+                _, full_path = filtered[self.selected_idx]
+                try:
+                    if platform.system() == "Windows":
+                        os.startfile(full_path)
+                    elif platform.system() == "Darwin":
+                        os.system(f"open '{full_path}'")
+                except Exception as e:
+                    CONSOLE.print(f"Error: {e}", style="red")
+            self.update_display()
+
+        # Application
+        self.app = Application(
+            layout=self.layout,
+            key_bindings=bindings,
+            full_screen=False,
+        )
+
+    def get_filtered_items(self):
+        query = self.buffer.text.strip().lower()
+        if not query:
+            return self.items
+        return [(name, path) for name, path in self.items if query in name.lower()]
+
+    def get_results_text(self):
+        filtered = self.get_filtered_items()
+        if not filtered:
+            return [("yellow", "No matches found.")]
+        lines = []
+        self.selected_idx = max(0, min(self.selected_idx, len(filtered) - 1))
+        for i, (name, _) in enumerate(filtered[:20]):  # Limit to 20 items
+            if i == self.selected_idx:
+                lines.append(("bold green", f"> {name}"))
+            else:
+                lines.append(("white", f"{name}"))
+            lines.append(("", "\n"))  # Newline after each item
+        return lines
+
+    def get_prompt_text(self):
+        return [("white", f"Find> {self.buffer.text}")]
+
+    def update_results(self, buffer):
+        self.update_display()
+
+    def update_display(self):
+        self.results_control.text = self.get_results_text()
+        self.prompt_control.text = self.get_prompt_text()
+        self.app.invalidate()  # Force redraw
+
+    def run(self):
+        self.app.run()
+
+def main():
+    CONSOLE.print("Checking index...", style="yellow")
     if not os.path.exists(index_file):
-        stdscr.addstr(1, 2, "Creating initial index...")
-        stdscr.refresh()
+        CONSOLE.print("Creating initial index (this may take a moment)...", style="yellow")
         index_files()
-        stdscr.addstr(2, 2, "Index created!")
-        stdscr.refresh()
-        time.sleep(1)
-
-    indexer_thread = threading.Thread(target=background_indexer, daemon=True)
-    indexer_thread.start()
+        CONSOLE.print("Index created!", style="green")
 
     items = load_items()
-    indexing_status = ""
+    if not items:
+        CONSOLE.print("No items indexed. Try running with sudo if on macOS.", style="red")
+        return
 
-    event_handler = IndexHandler()
-    observer = Observer()
-    observer.schedule(event_handler, root_path, recursive=True)
-    observer.start()
-
-    try:
-        curses.curs_set(1)
-        query = ""
-        selected_idx = 0
-
-        while True:
-            try:
-                msg = index_queue.get_nowait()
-                if isinstance(msg, tuple) and msg[0] == "remove":
-                    items = load_items()
-                    indexing_status = f"Removed: {os.path.basename(msg[1])}"
-                elif msg == "index_complete":
-                    items = load_items()
-                    indexing_status = "Index updated"
-                    threading.Timer(2.0, lambda: globals().update(indexing_status="")).start()
-                elif msg == "reindex":
-                    indexing_status = "Indexing..."
-            except queue.Empty:
-                pass
-
-            stdscr.clear()
-            height, width = stdscr.getmaxyx()
-            max_display = height - 3
-
-            if query:
-                filtered = [(name, path) for name, path in items if query.lower() in name.lower()]
-            else:
-                filtered = items
-
-            if not filtered:
-                selected_idx = 0
-            else:
-                selected_idx = max(0, min(selected_idx, len(filtered) - 1))
-
-            for i, (name, _) in enumerate(filtered[:max_display]):
-                display_name = name[:width - 1]
-                if i == selected_idx:
-                    stdscr.addstr(i, 0, display_name, curses.A_REVERSE)
-                else:
-                    stdscr.addstr(i, 0, display_name)
-
-            if indexing_status:
-                stdscr.addstr(height - 2, 0, indexing_status[:width - 1])
-
-            prompt = f"Find> {query}"
-            stdscr.addstr(height - 1, 0, prompt[:width - 1])
-            stdscr.move(height - 1, min(len(prompt), width - 1))
-            stdscr.refresh()
-
-            key = stdscr.getch()
-            if key == 27:  # ESC
-                break
-            elif key in (curses.KEY_BACKSPACE, 127, 8):
-                if query:
-                    query = query[:-1]
-                    selected_idx = 0
-            elif 32 <= key <= 126:
-                query += chr(key)
-                selected_idx = 0
-            elif key == curses.KEY_UP:
-                selected_idx = max(0, selected_idx - 1)
-            elif key == curses.KEY_DOWN:
-                if filtered:
-                    selected_idx = min(len(filtered) - 1, selected_idx + 1)
-            elif key == 10:
-                if filtered:
-                    _, full_path = filtered[selected_idx]
-                    try:
-                        if platform.system() == "Windows":
-                            os.startfile(full_path)
-                        elif platform.system() == "Linux":
-                            os.system(f"xdg-open '{full_path}'")
-                        elif platform.system() == "Darwin":
-                            os.system(f"open '{full_path}'")
-                    except Exception as e:
-                        stdscr.addstr(height - 3, 0, f"Error: {str(e)}"[:width - 1])
-                        stdscr.refresh()
-                        stdscr.getch()
-
-    finally:
-        index_queue.put("stop")
-        observer.stop()
-        observer.join()
-
+    app = IndexerApp()
+    app.run()
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    main()

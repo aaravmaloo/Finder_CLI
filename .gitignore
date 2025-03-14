@@ -4,3 +4,4 @@ src/.venv/
 src/__pycache__/
 src/dist/
 src/rust_src/target/
+src/Finder_CLI_Setup.exe

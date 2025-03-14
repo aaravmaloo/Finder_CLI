@@ -91,6 +91,20 @@ def rmdir(args):
     except PermissionError:
         return ["Permission denied by operating system."], COLOR_RED
 
+def make_directory(args):
+    if not args:
+        return ["Error: No directory name specified."], COLOR_RED
+    dir_name = args[0].strip()
+    try:
+        os.mkdir(dir_name)
+        return [f"Created directory '{dir_name}'"], COLOR_GREEN
+    except FileExistsError:
+        return [f"Error: Directory '{dir_name}' already exists."], COLOR_RED
+    except PermissionError:
+        return ["Permission denied by operating system."], COLOR_RED
+    except OSError as e:
+        return [f"Error: {e}"], COLOR_RED
+
 def copy_file(args):
     if len(args) < 2:
         return ["Error: Copy command requires source and destination."], COLOR_RED
@@ -149,6 +163,10 @@ def create_file(args):
     except Exception as e:
         return [f"Error: {e}"], COLOR_RED
 
+
+
+
+
 def show_tutorial(_):
     return ["Welcome to Finder_CLI tutorial!",
             "Finder_CLI is a command-line-based file explorer for programmers.",
@@ -164,7 +182,7 @@ COMMANDS = {
     "ls": list_dir, "move": move_file, "cd": change_directory,
     "touch": create_file, "tutor": show_tutorial, "rm": rm,
     "rmdir": rmdir, "copy": copy_file, "clear": clear_output,
-    "cls": clear_output, "dir": list_dir,
+    "cls": clear_output, "dir": list_dir, "mkdir" : make_directory,
 }
 
 def open_powershell_with_cd(path):

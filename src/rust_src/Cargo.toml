@@ -1,0 +1,10 @@
+[package]
+name = "rust_src"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pyo3 = { version = "0.18", features = ["auto-initialize"] }
+
+[build-dependencies]
+maturin = "0.14"

@@ -204,7 +204,7 @@ def main(stdscr):
         height, width = stdscr.getmaxyx()
         max_output_lines = height - 2
 
-        # Batch screen updates
+
         for i, (line, color) in enumerate(output_lines[-max_output_lines:]):
             if i < height - 1:
                 stdscr.addstr(i, 0, line[:width - 1], color)
@@ -219,7 +219,7 @@ def main(stdscr):
         if key == -1:
             continue
 
-        if key == 19:  # Ctrl+S
+        if key == 19:
             stdscr.clear()
             stdscr.addstr(0, 0, "[indexer] ", COLOR_DEFAULT)
             stdscr.refresh()
@@ -253,12 +253,12 @@ def main(stdscr):
                 command = ""
                 cursor_pos = 0
 
-        elif key in (curses.KEY_BACKSPACE, 127, 8):  # Backspace
+        elif key in (curses.KEY_BACKSPACE, 127, 8):
             if cursor_pos > 0:
                 command = command[:cursor_pos - 1] + command[cursor_pos:]
                 cursor_pos -= 1
 
-        elif key == 23:  # Ctrl+W
+        elif key == 23:
             if cursor_pos > 0:
                 left_part = command[:cursor_pos]
                 last_space = left_part.rfind(' ') if ' ' in left_part else 0
@@ -282,7 +282,7 @@ def main(stdscr):
                 history_index -= 1
                 command = "" if history_index == -1 else command_history[-1 - history_index]
                 cursor_pos = len(command)
-        elif 32 <= key <= 126:  # Printable characters
+        elif 32 <= key <= 126:
             command = command[:cursor_pos] + chr(key) + command[cursor_pos:]
             cursor_pos += 1
 

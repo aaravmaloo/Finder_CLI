@@ -9,11 +9,11 @@ fn main() -> PyResult<()> {
     let mut current_dir = env::current_exe()?;
 
     println!("Current directory: {}", current_dir.display());
+
     // the generated code most of the time gen in <rust_root>/src/target/debug/rust_src
-    for i in 0..4 {
+    for _i in 0..4u8 {
         current_dir.pop();
     }
-    println!("Current directory: {}", current_dir.display());
 
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys")?;

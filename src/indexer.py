@@ -83,17 +83,12 @@ else:  # Linux/Unix
 index_queue = queue.Queue()
 
 
-def get_windows_drives():
-    """Gets a list of drive letters on Windows."""
-    if platform.system() != "Windows":
-        return ["/"]  # Return root for non-Windows
-
-    drives = []
-    bitmask = ctypes.windll.kernel32.GetLogicalDrives()
-    for i in range(26):  # A to Z
-        if (bitmask >> i) & 1:
-            drives.append(chr(ord("A") + i) + ":\\")
-    return drives
+def get_base_path():
+    """Gets the current drive letter on Windows, or '/' on other systems."""
+    if platform.system() == "Windows":
+        return os.path.splitdrive(os.getcwd())[0] + "\\"
+    else:
+        return "/"
 
 
 class IndexHandler(FileSystemEventHandler):
@@ -104,7 +99,6 @@ class IndexHandler(FileSystemEventHandler):
         if event.src_path.endswith("index.txt") or event.src_path.startswith("~$"):
             return
 
-        current_time = time.time()
         if current_time - self.last_event > EVENT_TIME_DIFF:
             if event.event_type == "deleted":
                 index_queue.put(("remove", event.src_path))
@@ -116,8 +110,7 @@ class IndexHandler(FileSystemEventHandler):
 def index_files(background=False):
     import concurrent.futures
 
-    base_path = "C:\\" if platform.system() == "Windows" else "/"
-
+    base_path = get_base_path()
     try:
         subdirs = [os.path.join(base_path, d) for d in os.listdir(base_path)]
         subdirs = [
@@ -129,7 +122,7 @@ def index_files(background=False):
         subdirs = [base_path]
 
     paths = []
-    num_threads = max(1, os.cpu_count() // 2)
+    num_threads = max(1, os.cpu_count() or 2 // 2)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
 
@@ -215,6 +208,7 @@ def main(stdscr):
     observer = Observer()
     observer.schedule(event_handler, root_path, recursive=True)
     observer.start()
+    stdscr.nodelay(False)
 
     try:
         curses.curs_set(1)
@@ -309,4 +303,3 @@ def main(stdscr):
 
 if __name__ == "__main__":
     curses.wrapper(main)
-

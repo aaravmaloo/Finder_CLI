@@ -1,0 +1,6 @@
+Metadata-Version: 2.2
+Name: finder
+Version: 0.2
+License-File: LICENSE
+Requires-Dist: watchdog
+Dynamic: requires-dist

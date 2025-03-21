@@ -7,8 +7,7 @@ import shutil
 import shlex
 from rich.tree import Tree
 from rich.console import Console
-import indexer
-
+from . import indexer
 
 
 COLOR_RED = 1
@@ -23,8 +22,9 @@ SHORTCUT_REPLACEMENTS = {
     "~": os.path.expanduser("~"),
     "*": os.path.join(os.path.expanduser("~"), "Desktop"),
     "!": os.path.join(os.path.expanduser("~"), "Downloads"),
-    "&": os.path.join(os.path.expanduser("~"), "AppData")
+    "&": os.path.join(os.path.expanduser("~"), "AppData"),
 }
+
 
 def init_colors():
     curses.start_color()
@@ -36,17 +36,20 @@ def init_colors():
     COLOR_GREEN = curses.color_pair(2)
     COLOR_DEFAULT = curses.color_pair(3)
 
+
 @lru_cache(maxsize=128)
 def format_size(size):
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024:
             return f"{size:.2f} {unit}"
         size /= 1024
     return f"{size:.2f} PB"
 
+
 @lru_cache(maxsize=64)
 def resolve_path(path):
     return os.path.abspath(os.path.expanduser(path))
+
 
 def list_dir(args):
     path = resolve_path(args[0] if args else ".")
@@ -55,7 +58,11 @@ def list_dir(args):
         with os.scandir(path) as entries:
             for entry in entries:
                 name = entry.name
-                tree.add(f"{name}/" if entry.is_dir() else f"{name} ({format_size(entry.stat().st_size)})")
+                tree.add(
+                    f"{name}/"
+                    if entry.is_dir()
+                    else f"{name} ({format_size(entry.stat().st_size)})"
+                )
         with CONSOLE.capture() as capture:
             CONSOLE.print(tree)
         return capture.get().splitlines(), COLOR_DEFAULT
@@ -63,8 +70,6 @@ def list_dir(args):
         return ["Directory not found."], COLOR_RED
     except PermissionError:
         return ["Permission denied."], COLOR_RED
-
-
 
 
 def rm(args):
@@ -79,6 +84,7 @@ def rm(args):
     except PermissionError:
         return ["Permission denied by operating system."], COLOR_RED
 
+
 def rmdir(args):
     if not args:
         return ["Error: No folder name specified."], COLOR_RED
@@ -90,6 +96,7 @@ def rmdir(args):
         return ["Folder specified in stdin is not found."], COLOR_RED
     except PermissionError:
         return ["Permission denied by operating system."], COLOR_RED
+
 
 def make_directory(args):
     if not args:
@@ -105,6 +112,7 @@ def make_directory(args):
     except OSError as e:
         return [f"Error: {e}"], COLOR_RED
 
+
 def copy_file(args):
     if len(args) < 2:
         return ["Error: Copy command requires source and destination."], COLOR_RED
@@ -118,6 +126,7 @@ def copy_file(args):
         return [f"Copied '{source}' to '{destination}'"], COLOR_GREEN
     except Exception as e:
         return [f"Error: {e}"], COLOR_RED
+
 
 def move_file(args):
     if len(args) < 2:
@@ -133,6 +142,7 @@ def move_file(args):
     except Exception as e:
         return [f"Error: {e}"], COLOR_RED
 
+
 def change_directory(args):
     if not args:
         return ["Error: No directory specified."], COLOR_RED
@@ -145,13 +155,16 @@ def change_directory(args):
     full_path = os.path.abspath(os.path.expanduser(full_path))
     try:
         if not os.path.isdir(full_path):
-            return [f"Error: '{full_path}' is not a directory or does not exist."], COLOR_RED
+            return [
+                f"Error: '{full_path}' is not a directory or does not exist."
+            ], COLOR_RED
         os.chdir(full_path)
         return [f"Changed to '{full_path}'"], COLOR_GREEN
     except PermissionError:
         return [f"Permission denied: '{path}'"], COLOR_RED
     except OSError as e:
         return [f"Invalid path: {e}"], COLOR_RED
+
 
 def create_file(args):
     if not args:
@@ -164,29 +177,39 @@ def create_file(args):
         return [f"Error: {e}"], COLOR_RED
 
 
-
-
-
 def show_tutorial(_):
-    return ["Welcome to Finder_CLI tutorial!",
-            "Finder_CLI is a command-line-based file explorer for programmers.",
-            "Basic commands: cd, ls, move, touch, etc.",
-            "Use ~ for home folder (C:\\Users\\YourName).",
-            "Press Ctrl+S to launch indexer."], COLOR_DEFAULT
+    return [
+        "Welcome to Finder_CLI tutorial!",
+        "Finder_CLI is a command-line-based file explorer for programmers.",
+        "Basic commands: cd, ls, move, touch, etc.",
+        "Use ~ for home folder (C:\\Users\\YourName).",
+        "Press Ctrl+S to launch indexer.",
+    ], COLOR_DEFAULT
 
 
 def clear_output(_):
     return [], COLOR_DEFAULT
 
+
 COMMANDS = {
-    "ls": list_dir, "move": move_file, "cd": change_directory,
-    "touch": create_file, "tutor": show_tutorial, "rm": rm,
-    "rmdir": rmdir, "copy": copy_file, "clear": clear_output,
-    "cls": clear_output, "dir": list_dir, "mkdir" : make_directory,
+    "ls": list_dir,
+    "move": move_file,
+    "cd": change_directory,
+    "touch": create_file,
+    "tutor": show_tutorial,
+    "rm": rm,
+    "rmdir": rmdir,
+    "copy": copy_file,
+    "clear": clear_output,
+    "cls": clear_output,
+    "dir": list_dir,
+    "mkdir": make_directory,
 }
 
+
 def open_powershell_with_cd(path):
-    subprocess.run(f'powershell -NoExit -Command "Set-Location \'{path}\'"', shell=True)
+    subprocess.run(f"powershell -NoExit -Command \"Set-Location '{path}'\"", shell=True)
+
 
 def main(stdscr):
     init_colors()
@@ -204,14 +227,16 @@ def main(stdscr):
         height, width = stdscr.getmaxyx()
         max_output_lines = height - 2
 
-
         for i, (line, color) in enumerate(output_lines[-max_output_lines:]):
             if i < height - 1:
-                stdscr.addstr(i, 0, line[:width - 1], color)
+                stdscr.addstr(i, 0, line[: width - 1], color)
 
         prompt = f"[finder_cli] {os.getcwd()}> {command}"
-        stdscr.addstr(height - 1, 0, prompt[:width - 1], COLOR_DEFAULT)
-        stdscr.move(height - 1, min(len(f"[finder_cli] {os.getcwd()}> ") + cursor_pos, width - 1))
+        stdscr.addstr(height - 1, 0, prompt[: width - 1], COLOR_DEFAULT)
+        stdscr.move(
+            height - 1,
+            min(len(f"[finder_cli] {os.getcwd()}> ") + cursor_pos, width - 1),
+        )
 
         stdscr.refresh()
 
@@ -243,11 +268,17 @@ def main(stdscr):
                         cmd_name, args = parts[0], parts[1:] if len(parts) > 1 else []
                         if cmd_name in COMMANDS:
                             result, color = COMMANDS[cmd_name](args)
-                            output_lines = result if not result else output_lines + [(line, color) for line in result]
+                            output_lines = (
+                                result
+                                if not result
+                                else output_lines + [(line, color) for line in result]
+                            )
                         else:
                             output_lines.append(("Invalid command.", COLOR_RED))
                     except ValueError as e:
-                        output_lines.append((f"Error: Invalid command syntax - {e}", COLOR_RED))
+                        output_lines.append(
+                            (f"Error: Invalid command syntax - {e}", COLOR_RED)
+                        )
                     except Exception as e:
                         output_lines.append((f"Error: {e}", COLOR_RED))
                 command = ""
@@ -255,13 +286,13 @@ def main(stdscr):
 
         elif key in (curses.KEY_BACKSPACE, 127, 8):
             if cursor_pos > 0:
-                command = command[:cursor_pos - 1] + command[cursor_pos:]
+                command = command[: cursor_pos - 1] + command[cursor_pos:]
                 cursor_pos -= 1
 
         elif key == 23:
             if cursor_pos > 0:
                 left_part = command[:cursor_pos]
-                last_space = left_part.rfind(' ') if ' ' in left_part else 0
+                last_space = left_part.rfind(" ") if " " in left_part else 0
                 command = command[:last_space] + command[cursor_pos:]
                 cursor_pos = last_space
 
@@ -280,7 +311,9 @@ def main(stdscr):
         elif key == curses.KEY_DOWN:
             if history_index > -1:
                 history_index -= 1
-                command = "" if history_index == -1 else command_history[-1 - history_index]
+                command = (
+                    "" if history_index == -1 else command_history[-1 - history_index]
+                )
                 cursor_pos = len(command)
         elif 32 <= key <= 126:
             command = command[:cursor_pos] + chr(key) + command[cursor_pos:]
@@ -288,5 +321,10 @@ def main(stdscr):
 
     open_powershell_with_cd(os.getcwd())
 
-if __name__ == "__main__":
+
+def run():
     curses.wrapper(main)
+
+
+if __name__ == "__main__":
+    run()
